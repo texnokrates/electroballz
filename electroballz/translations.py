@@ -1,6 +1,7 @@
 # coding=utf-8
+from warnings import warn
 from qutip import clebsch
-from math import sin, cos
+from math import sin, cos, sqrt, factorial
 # N.B. toto může být pomalejší než pokaždé volat scipy.special.lpmv, zkontrolovat!
 from scipy.special import lpmv
 
@@ -13,23 +14,24 @@ def wigner3j(j1, j2, j3, m1, m2, m3):
     return clebsch(j1, j2, j3, m1, m2, -m3) * (-1)**(j1-j2-m3) / (
             sqrt(2*j3 + 1))
 
-
-
-
 def factorial_frac(numer, denom):
     """Calculates numer!/denom!"""
     # we silently suppose that the arguments are integer
     # slow&dirty way for now (fix that later)
-    return numer / float(denom)
+    return factorial(numer) / float(factorial(denom))
 
 
 def bks_C(m, l, mp, lp, k, d, eta, z):
     """[BKS 1991], (5.36)"""
+    if 0 == l or 0 == lp:
+        warn("Trying to evaluate transversal coefficient for l == 0.")
+        return 0
     coseta = cos(eta)
     res = 0.
-    for lambd in range(abs(l-lp) + 1, l + lp + 1):
+    for lambd in range(abs(l-lp), l + lp + 1):
         # If l + l' + λ is odd, the first 3j symbol is zero.
-        if 0 == (l + lp + lambd) % 2:
+        # Second 3j-symbol selection rule to be considered is |mi| <= ji.
+        if 0 == (l + lp + lambd) % 2 and abs(mp-m) <= lambd:
             line2 = (-1)**(lp - l + lambd) * (2*lambd + 1) * sqrt(
                     #TODO podíl faktoriálů udělat nějak chytřeji. Co dělá python s přetečením?
                     (2*l+1)*(2*lp+1)*factorial_frac(lambd-m+mp,lambd+m-mp) /
@@ -45,10 +47,13 @@ def bks_C(m, l, mp, lp, k, d, eta, z):
 
 def bks_D(m, l, mp, lp, k, d, eta, z):
     """[BKS 1991], (5.37)"""
+    if 0 == l or 0 == lp:
+        warn("Trying to evaluate transversal coefficient for l == 0.")
+        return 0
     coseta  = cos(eta)
     res = 0.
-    for lambd in range(abs(l-lp)+1, l+lp):
-        if ((l + lp + lambd) % 2):
+    for lambd in range(abs(l-lp)+1, l+lp+1):
+        if ((l + lp + lambd) % 2) and abs(mp-m) <= lambd:
             line2 = (1j)**(lp - l + lambd + 1) * (2*lambd + 1) * sqrt(
                     (2*l+1)*(2*lp+1)*factorial_frac(lambd-m+mp,lambd+m-mp) /
                     (l * (l+1) * lp * (lp + 1)))
@@ -67,7 +72,7 @@ def bks_B(m, l, mp, lp, k, d, eta, z):
     coseta = cos(eta)
     res = 0.
     for lambd in range(abs(l-lp) + 1, l + lp + 1):
-        if 0 == (l + lp + lambd) % 2:
+        if 0 == (l + lp + lambd) % 2 and abs(mp-m) <= lambd:
             line2 = (-1)**(lp - l + lambd) * (2*lambd + 1) * sqrt(
                     (2*l+1)*(2*lp+1)*factorial_frac(lambd-m+mp,lambd+m-mp))
             line3 = wigner3j(l, lp, lambd, 0, 0, 0)

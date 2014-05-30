@@ -5,7 +5,7 @@ from scipy.special import sph_jn, sph_yn
 
 def jl(l,z):
     """Wrapper for sph_jn (discards the unnecessary data)"""
-    return sph_jn(n, z)[0][l]
+    return sph_jn(l, z)[0][l]
 
 def yl(l,z):
     """Wrapper for sph_yn (discards the unnecessary data)"""
